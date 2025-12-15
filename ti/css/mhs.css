@@ -1,0 +1,39 @@
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+body{
+    background-color: aliceblue;
+}
+h5{
+    text-align: center;
+}
+.card-img-top{
+    border-radius: 50%;
+    height: 150px !important;
+    width: 150px !important;
+    position: relative;
+    left: 100px;
+    top: -50px;
+    object-fit: cover;
+}
+.card{
+    border-radius: 0;
+    cursor: pointer;
+    margin-top: 100px !important;
+}
+.card:hover{
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+.card-body{
+    margin-top: -60px;
+}
+
+.ig{
+    color: red;
+}
+
+.wa{
+    color: green;
+}
