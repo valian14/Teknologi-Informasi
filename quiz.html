@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Playground - Belajar Coding</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 48px;
+            background: linear-gradient(45deg, #3b82f6, #60a5fa, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #60a5fa;
+            font-size: 18px;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: rgba(59, 130, 246, 0.2);
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(59, 130, 246, 0.4);
+            transform: translateX(-5px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .sidebar {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            height: fit-content;
+        }
+
+        .sidebar-title {
+            font-size: 24px;
+            color: #3b82f6;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-filter {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .category-label {
+            display: block;
+            color: #60a5fa;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .category-wrapper {
+            position: relative;
+        }
+
+        .category-icon-display {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .category-select {
+            width: 100%;
+            padding: 12px 15px 12px 50px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .category-select:hover,
+        .category-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+
+        .category-select option {
+            background: #1e293b;
+            color: #fff;
+            padding: 10px;
+        }
+
+        .category-icon {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .js-logo {
+            background: #F7DF1E;
+            color: #000;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+        }
+
+        .sql-logo {
+            background: #00758F;
+            color: #FFF;
+            font-weight: bold;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+        }
+
+        .challenge-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .challenge-item {
+            padding: 15px 20px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .challenge-item:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+            transform: translateX(5px);
+        }
+
+        .challenge-item.active {
+            background: linear-gradient(45deg, rgba(59, 130, 246, 0.3), rgba(96, 165, 250, 0.3));
+            border-color: #60a5fa;
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .challenge-icon {
+            font-size: 24px;
+        }
+
+        .challenge-text {
+            flex: 1;
+        }
+
+        .challenge-title {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .challenge-desc {
+            font-size: 13px;
+            color: #60a5fa;
+        }
+
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .instruction-panel {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .instruction-title {
+            font-size: 28px;
+            color: #3b82f6;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .instruction-content {
+            color: #cbd5e1;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .hint-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-top: 15px;
+        }
+
+        .hint-title {
+            color: #10b981;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hint-content {
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        .code-example {
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #93c5fd;
+            overflow-x: auto;
+        }
+
+        .db-schema {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 15px 0;
+        }
+
+        .db-schema-title {
+            color: #10b981;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .db-table {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .db-table:last-child {
+            margin-bottom: 0;
+        }
+
+        .db-table-name {
+            color: #60a5fa;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .db-table-content {
+            color: #cbd5e1;
+            font-size: 13px;
+            line-height: 1.6;
+            font-family: 'Courier New', monospace;
+        }
+
+        .editor-panel {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .editor-title {
+            font-size: 20px;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-run {
+            background: linear-gradient(45deg, #10b981, #34d399);
+            color: #fff;
+        }
+
+        .btn-run:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-reset {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+            color: #ef4444;
+        }
+
+        .btn-reset:hover {
+            background: rgba(239, 68, 68, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-hint {
+            background: rgba(251, 191, 36, 0.2);
+            border: 2px solid #fbbf24;
+            color: #fbbf24;
+        }
+
+        .btn-hint:hover {
+            background: rgba(251, 191, 36, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .code-editor {
+            background: #0f172a;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            color: #93c5fd;
+            min-height: 300px;
+            resize: vertical;
+            width: 100%;
+            outline: none;
+            line-height: 1.6;
+        }
+
+        .code-editor:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .output-panel {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .output-header {
+            font-size: 20px;
+            color: #3b82f6;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .output-content {
+            background: #0f172a;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 150px;
+            font-family: 'Courier New', monospace;
+            color: #10b981;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .output-content.error {
+            color: #ef4444;
+        }
+
+        .sql-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .sql-table th,
+        .sql-table td {
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 10px;
+            text-align: left;
+        }
+
+        .sql-table th {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            font-weight: bold;
+        }
+
+        .sql-table td {
+            color: #cbd5e1;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: bounceIn 0.6s ease;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .success-title {
+            color: #10b981;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .success-text {
+            color: #cbd5e1;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .popup-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup-modal {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 3px solid #10b981;
+            border-radius: 30px;
+            padding: 50px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            animation: popupBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 20px 60px rgba(16, 185, 129, 0.4);
+        }
+
+        @keyframes popupBounce {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) translateY(-100px);
+            }
+            50% {
+                transform: scale(1.1) translateY(0);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .popup-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: rotateIn 0.8s ease, float 2s ease-in-out 0.8s infinite;
+        }
+
+        @keyframes rotateIn {
+            0% {
+                transform: rotate(-180deg) scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: rotate(0deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .popup-title {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #10b981, #34d399, #6ee7b7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .popup-message {
+            font-size: 18px;
+            color: #cbd5e1;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .popup-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .popup-btn {
+            padding: 15px 35px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .popup-btn-primary {
+            background: linear-gradient(45deg, #10b981, #34d399);
+            color: #fff;
+        }
+
+        .popup-btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
+        }
+
+        .popup-btn-secondary {
+            background: rgba(59, 130, 246, 0.2);
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .popup-btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.3);
+            transform: translateY(-3px);
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .sidebar {
+                order: 1;
+            }
+
+            .workspace {
+                order: 2;
+            }
+
+            .challenge-list {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 36px;
+            }
+
+            .challenge-list {
+                grid-template-columns: 1fr;
+            }
+
+            .editor-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+
+            .editor-controls {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .btn-run {
+                grid-column: 1 / -1;
+            }
+
+            .popup-buttons {
+                flex-direction: column;
+            }
+
+            .popup-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">← Kembali ke Home</a>
+        
+        <header>
+            <h1>💻 Code Playground</h1>
+            <p class="subtitle">Belajar JavaScript & SQL dengan Latihan Interaktif</p>
+        </header>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-title">📚 Daftar Challenge</div>
+                
+                <div class="category-filter">
+                    <label class="category-label">Pilih Kategori:</label>
+                    <div class="category-wrapper">
+                        <div class="category-icon-display" id="categoryIcon">
+                            <div class="category-icon js-logo">JS</div>
+                        </div>
+                        <select class="category-select" id="categorySelect">
+                            <option value="javascript">JavaScript</option>
+                            <option value="sql">Query Database (SQL)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="challenge-list" id="challengeList"></div>
+            </div>
+
+            <div class="workspace">
+                <div class="instruction-panel" id="instructionPanel"></div>
+
+                <div class="editor-panel">
+                    <div class="editor-header">
+                        <div class="editor-title">
+                            ✏️ <span id="editorLabel">Code Editor</span>
+                        </div>
+                        <div class="editor-controls">
+                            <button class="btn btn-hint" id="showHintBtn">💡 Hint</button>
+                            <button class="btn btn-reset" id="resetBtn">🔄 Reset</button>
+                            <button class="btn btn-run" id="runBtn">▶️ Run</button>
+                        </div>
+                    </div>
+                    <textarea class="code-editor" id="codeEditor" spellcheck="false"></textarea>
+                </div>
+
+                <div class="output-panel">
+                    <div class="output-header">📺 Output</div>
+                    <div class="output-content" id="output">Klik "Run" untuk melihat hasil...</div>
+                    <div class="success-message" id="successMessage">
+                        <div class="success-title">🎉 Selamat!</div>
+                        <div class="success-text">Challenge selesai!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup-modal">
+            <div class="popup-icon">🎉</div>
+            <div class="popup-title">Berhasil!</div>
+            <div class="popup-message">Selamat! Challenge ini berhasil diselesaikan! 🚀</div>
+            <div class="popup-buttons">
+                <button class="popup-btn popup-btn-primary" id="nextChallengeBtn">Challenge Berikutnya →</button>
+                <button class="popup-btn popup-btn-secondary" id="closePopupBtn">Tetap di Sini</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CHALLENGE DATA
+const jsChalls = [
+{
+    id: 1, category: 'javascript', icon: "🔁", title: "For Loop Dasar", desc: "Belajar looping dengan for",
+    instruction: "Buatlah <strong>for loop</strong> yang mencetak angka 1 sampai 5.",
+    hint: "Gunakan console.log() di dalam loop. Contoh: <code>for (let i = 1; i <= 5; i++) { console.log(i); }</code>",
+    starterCode: "// Tulis for loop kamu di sini\n\n",
+    expectedOutput: "1\n2\n3\n4\n5"
+},
+{
+    id: 2, category: 'javascript', icon: "➕", title: "Penjumlahan Array", desc: "Loop melalui array",
+    instruction: "Jumlahkan semua angka dalam array <code>[10, 20, 30, 40, 50]</code>.",
+    hint: "Buat variabel sum = 0, loop array dan tambahkan setiap elemen.",
+    starterCode: "const numbers = [10, 20, 30, 40, 50];\n// Tulis kode kamu\n\n",
+    expectedOutput: "Total: 150"
+},
+{
+    id: 3, category: 'javascript', icon: "🔢", title: "Angka Genap", desc: "Filter dengan kondisi",
+    instruction: "Cetak hanya angka <strong>genap</strong> dari 1 sampai 10.",
+    hint: "Gunakan operator modulo (%). Jika <code>i % 2 === 0</code>, angka genap.",
+    starterCode: "// Cetak angka genap dari 1 sampai 10\n\n",
+    expectedOutput: "2\n4\n6\n8\n10"
+},
+{
+    id: 4, category: 'javascript', icon: "⭐", title: "Pola Bintang", desc: "Nested loop",
+    instruction: "Buat pola bintang segitiga 5 baris menggunakan nested loop.",
+    hint: "Loop luar untuk baris, loop dalam untuk bintang. Contoh: <code>for (let i = 1; i <= 5; i++) { let stars = ''; for (let j = 1; j <= i; j++) { stars += '*'; } console.log(stars); }</code>",
+    starterCode: "// Buat pola bintang segitiga\n\n",
+    expectedOutput: "*\n**\n***\n****\n*****"
+},
+{
+    id: 5, category: 'javascript', icon: "🔤", title: "Reverse String", desc: "Manipulasi string",
+    instruction: "Balik kata <code>'JavaScript'</code> menjadi <code>'tpircSavaJ'</code>.",
+    hint: "Loop dari akhir ke awal. Contoh: <code>for (let i = word.length - 1; i >= 0; i--) { reversed += word[i]; }</code>",
+    starterCode: "const word = 'JavaScript';\n// Balik kata tersebut\n\n",
+    expectedOutput: "tpircSavaJ"
+},
+{
+    id: 6, category: 'javascript', icon: "🎯", title: "FizzBuzz", desc: "Logic challenge",
+    instruction: "FizzBuzz 1-15: kelipatan 3 = 'Fizz', kelipatan 5 = 'Buzz', kelipatan 15 = 'FizzBuzz'.",
+    hint: "Cek kelipatan 15 dulu, lalu 3, lalu 5.",
+    starterCode: "// Implementasi FizzBuzz\n\n",
+    expectedOutput: "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz"
+},
+{
+    id: 7, category: 'javascript', icon: "🔍", title: "Cari Nilai Max", desc: "Array algorithm",
+    instruction: "Temukan nilai terbesar dari <code>[45, 12, 78, 23, 89, 56]</code> tanpa Math.max().",
+    hint: "Buat variabel max = numbers[0], loop dan update jika lebih besar.",
+    starterCode: "const numbers = [45, 12, 78, 23, 89, 56];\n// Cari nilai maksimum\n\n",
+    expectedOutput: "Nilai terbesar: 89"
+},
+{
+    id: 8, category: 'javascript', icon: "📊", title: "Hitung Karakter", desc: "String analysis",
+    instruction: "Hitung berapa kali huruf 'a' muncul dalam <code>'JavaScript adalah bahasa pemrograman'</code>.",
+    hint: "Loop setiap karakter, gunakan toLowerCase(), increment counter jika === 'a'.",
+    starterCode: "const text = 'JavaScript adalah bahasa pemrograman';\n// Hitung huruf 'a'\n\n",
+    expectedOutput: "Huruf a muncul: 9 kali"
+}
+];
+
+const sqlChalls = [
+{
+    id: 9, category: 'sql', icon: "📋", title: "SELECT Dasar", desc: "Query data sederhana",
+    instruction: "Tampilkan <strong>semua data</strong> dari tabel <code>users</code>.",
+    hint: "Gunakan SELECT * untuk menampilkan semua kolom. Syntax: <code>SELECT * FROM users;</code>",
+    starterCode: "-- Tulis SQL query kamu di sini\n",
+    dbSchema: `<div class="db-schema-title">🗄️ Database Schema</div>
+<div class="db-table"><div class="db-table-name">Table: users</div>
+<div class="db-table-content">id | name | email | age
+1 | Andi | andi@mail.com | 25
+2 | Budi | budi@mail.com | 30
+3 | Citra | citra@mail.com | 22
+4 | Doni | doni@mail.com | 28
+5 | Eka | eka@mail.com | 27</div></div>`,
+    expectedColumns: ['id', 'name', 'email', 'age'],
+    expectedRowCount: 5
+},
+{
+    id: 10, category: 'sql', icon: "🎯", title: "SELECT Kolom", desc: "Pilih kolom tertentu",
+    instruction: "Tampilkan hanya kolom <code>name</code> dan <code>email</code> dari tabel <code>users</code>.",
+    hint: "Sebutkan nama kolom yang ingin ditampilkan. Syntax: <code>SELECT name, email FROM users;</code>",
+    starterCode: "-- Pilih kolom name dan email\n",
+    dbSchema: `<div class="db-schema-title">🗄️ Database Schema</div>
+<div class="db-table"><div class="db-table-name">Table: users</div>
+<div class="db-table-content">id | name | email | age
+1 | Andi | andi@mail.com | 25
+2 | Budi | budi@mail.com | 30
+3 | Citra | citra@mail.com | 22
+4 | Doni | doni@mail.com | 28
+5 | Eka | eka@mail.com | 27</div></div>`,
+    expectedColumns: ['name', 'email'],
+    expectedRowCount: 5
+},
+{
+    id: 11, category: 'sql', icon: "🔍", title: "WHERE Clause", desc: "Filter data",
+    instruction: "Tampilkan user dengan <code>age</code> lebih dari 25.",
+    hint: "Gunakan WHERE untuk filter. Syntax: <code>SELECT * FROM users WHERE age > 25;</code>",
+    starterCode: "-- Filter user dengan age > 25\n",
+    dbSchema: `<div class="db-schema-title">🗄️ Database Schema</div>
+<div class="db-table"><div class="db-table-name">Table: users</div>
+<div class="db-table-content">id | name | email | age
+1 | Andi | andi@mail.com | 25
+2 | Budi | budi@mail.com | 30
+3 | Citra | citra@mail.com | 22
+4 | Doni | doni@mail.com | 28
+5 | Eka | eka@mail.com | 27</div></div>`,
+    expectedColumns: ['id', 'name', 'email', 'age'],
+    expectedRowCount: 3
+},
+{
+    id: 12, category: 'sql', icon: "📊", title: "ORDER BY", desc: "Sorting data",
+    instruction: "Tampilkan semua user, urutkan berdasarkan <code>age</code> dari terbesar ke terkecil.",
+    hint: "Gunakan ORDER BY dengan DESC. Syntax: <code>SELECT * FROM users ORDER BY age DESC;</code>",
+    starterCode: "-- Urutkan user berdasarkan age DESC\n",
+    dbSchema: `<div class="db-schema-title">🗄️ Database Schema</div>
+<div class="db-table"><div class="db-table-name">Table: users</div>
+<div class="db-table-content">id | name | email | age
+1 | Andi | andi@mail.com | 25
+2 | Budi | budi@mail.com | 30
+3 | Citra | citra@mail.com | 22
+4 | Doni | doni@mail.com | 28
+5 | Eka | eka@mail.com | 27</div></div>`,
+    expectedColumns: ['id', 'name', 'email', 'age'],
+    expectedFirstRow: {name: 'Budi'}
+},
+{
+    id: 13, category: 'sql', icon: "🔢", title: "COUNT Function", desc: "Hitung jumlah data",
+    instruction: "Hitung <strong>jumlah total</strong> user dalam tabel.",
+    hint: "Gunakan COUNT(*). Syntax: <code>SELECT COUNT(*) as total FROM users;</code>",
+    starterCode: "-- Hitung total user\n",
+    dbSchema: `<div class="db-schema-title">🗄️ Database Schema</div>
+<div class="db-table"><div class="db-table-name">Table: users</div>
+<div class="db-table-content">id | name | email | age
+1 | Andi | andi@mail.com | 25
+2 | Budi | budi@mail.com | 30
+3 | Citra | citra@mail.com | 22
+4 | Doni | doni@mail.com | 28
+5 | Eka | eka@mail.com | 27</div></div>`,
+    expectedColumns: ['total'],
+    expectedRowCount: 1,
+    expectedFirstRow: {total: 5}
+},
+{
+    id: 14, category: 'sql', icon: "➕", title: "SUM Function", desc: "Jumlahkan nilai",
+    instruction: "Hitung <strong>total harga</strong> semua produk di tabel <code>products</code>.",
+    hint: "Gunakan SUM(). Syntax: <code>SELECT SUM(price) as total_price FROM products;</code>",
+    starterCode: "-- Hitung total harga produk\n",
+    dbSchema: `<div class="db-schema-title">🗄️ Database Schema</div>
+<div class="db-table"><div class="db-table-name">Table: products</div>
+<div class="db-table-content">id | name | price | stock
+1 | Laptop | 5000000 | 10
+2 | Mouse | 150000 | 50
+3 | Keyboard | 300000 | 30
+4 | Monitor | 2000000 | 15</div></div>`,
+    expectedColumns: ['total_price'],
+    expectedFirstRow: {total_price: 7450000}
+},
+{
+    id: 15, category: 'sql', icon: "📈", title: "AVG Function", desc: "Rata-rata nilai",
+    instruction: "Hitung <strong>rata-rata umur</strong> user.",
+    hint: "Gunakan AVG(). Syntax: <code>SELECT AVG(age) as avg_age FROM users;</code>",
+    starterCode: "-- Hitung rata-rata umur\n",
+    dbSchema: `<div class="db-schema-title">🗄️ Database Schema</div>
+<div class="db-table"><div class="db-table-name">Table: users</div>
+<div class="db-table-content">id | name | email | age
+1 | Andi | andi@mail.com | 25
+2 | Budi | budi@mail.com | 30
+3 | Citra | citra@mail.com | 22
+4 | Doni | doni@mail.com | 28
+5 | Eka | eka@mail.com | 27</div></div>`,
+    expectedColumns: ['avg_age'],
+    expectedFirstRow: {avg_age: 26.4}
+},
+{
+    id: 16, category: 'sql', icon: "🎯", title: "LIKE Operator", desc: "Pencarian pattern",
+    instruction: "Cari user yang namanya mengandung huruf 'i'.",
+    hint: "Gunakan LIKE dengan %. Syntax: <code>SELECT * FROM users WHERE name LIKE '%i%';</code>",
+    starterCode: "-- Cari nama yang mengandung 'i'\n",
+    dbSchema: `<div class="db-schema-title">🗄️ Database Schema</div>
+<div class="db-table"><div class="db-table-name">Table: users</div>
+<div class="db-table-content">id | name | email | age
+1 | Andi | andi@mail.com | 25
+2 | Budi | budi@mail.com | 30
+3 | Citra | citra@mail.com | 22
+4 | Doni | doni@mail.com | 28
+5 | Eka | eka@mail.com | 27</div></div>`,
+    expectedColumns: ['id', 'name', 'email', 'age'],
+    expectedRowCount: 4
+}
+];
+
+const challenges = [...jsChalls, ...sqlChalls];
+let currentChallenge = 0;
+let currentCategory = 'javascript';
+let db = null;
+
+// INITIALIZE
+async function init() {
+await initSQL();
+renderChallengeList();
+loadChallenge(0);
+}
+
+// INIT SQL DATABASE
+async function initSQL() {
+try {
+    const SQL = await initSqlJs({
+        locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+    });
+    
+    db = new SQL.Database();
+    
+    // Create users table
+    db.run(`CREATE TABLE users (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        email TEXT,
+        age INTEGER
+    )`);
+    
+    db.run(`INSERT INTO users VALUES 
+        (1, 'Andi', 'andi@mail.com', 25),
+        (2, 'Budi', 'budi@mail.com', 30),
+        (3, 'Citra', 'citra@mail.com', 22),
+        (4, 'Doni', 'doni@mail.com', 28),
+        (5, 'Eka', 'eka@mail.com', 27)
+    `);
+    
+    // Create products table
+    db.run(`CREATE TABLE products (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        price INTEGER,
+        stock INTEGER
+    )`);
+    
+    db.run(`INSERT INTO products VALUES 
+        (1, 'Laptop', 5000000, 10),
+        (2, 'Mouse', 150000, 50),
+        (3, 'Keyboard', 300000, 30),
+        (4, 'Monitor', 2000000, 15)
+    `);
+    
+    console.log('✅ Database initialized');
+} catch (error) {
+    console.error('❌ Database init error:', error);
+}
+}
+
+// RENDER CHALLENGE LIST
+function renderChallengeList() {
+const filtered = challenges.filter(c => c.category === currentCategory);
+const list = document.getElementById('challengeList');
+list.innerHTML = filtered.map((c, idx) => `
+    <div class="challenge-item ${idx === 0 ? 'active' : ''}" data-index="${challenges.indexOf(c)}">
+        <div class="challenge-icon">${c.icon}</div>
+        <div class="challenge-text">
+            <div class="challenge-title">${c.title}</div>
+            <div class="challenge-desc">${c.desc}</div>
+        </div>
+    </div>
+`).join('');
+
+document.querySelectorAll('.challenge-item').forEach(item => {
+    item.addEventListener('click', () => loadChallenge(parseInt(item.dataset.index)));
+});
+}
+
+// LOAD CHALLENGE
+function loadChallenge(index) {
+currentChallenge = index;
+const c = challenges[index];
+
+document.querySelectorAll('.challenge-item').forEach((item, i) => {
+    item.classList.toggle('active', parseInt(item.dataset.index) === index);
+});
+
+const panel = document.getElementById('instructionPanel');
+panel.innerHTML = `
+    <div class="instruction-title">${c.icon} ${c.title}</div>
+    <div class="instruction-content">${c.instruction}</div>
+    ${c.dbSchema ? `<div class="db-schema">${c.dbSchema}</div>` : ''}
+    <div class="hint-box" id="hintBox" style="display: none;">
+        <div class="hint-title">💡 Hint</div>
+        <div class="hint-content">${c.hint}</div>
+    </div>
+`;
+
+document.getElementById('codeEditor').value = c.starterCode || '';
+document.getElementById('editorLabel').textContent = c.category === 'sql' ? 'SQL Editor' : 'Code Editor';
+document.getElementById('output').textContent = 'Klik "Run" untuk melihat hasil...';
+document.getElementById('output').classList.remove('error');
+document.getElementById('successMessage').classList.remove('show');
+}
+
+// CATEGORY CHANGE
+document.getElementById('categorySelect').addEventListener('change', (e) => {
+currentCategory = e.target.value;
+
+// Update icon
+const iconDisplay = document.getElementById('categoryIcon');
+if (currentCategory === 'javascript') {
+    iconDisplay.innerHTML = '<div class="category-icon js-logo">JS</div>';
+} else {
+    iconDisplay.innerHTML = '<div class="category-icon sql-logo">SQL</div>';
+}
+
+renderChallengeList();
+const firstOfCategory = challenges.findIndex(c => c.category === currentCategory);
+loadChallenge(firstOfCategory);
+});
+
+// SHOW HINT
+document.getElementById('showHintBtn').addEventListener('click', () => {
+const box = document.getElementById('hintBox');
+const btn = document.getElementById('showHintBtn');
+if (box.style.display === 'none') {
+    box.style.display = 'block';
+    btn.textContent = '🔒 Sembunyikan';
+} else {
+    box.style.display = 'none';
+    btn.textContent = '💡 Hint';
+}
+});
+
+// RESET
+document.getElementById('resetBtn').addEventListener('click', () => {
+if (confirm('Reset kode?')) loadChallenge(currentChallenge);
+});
+
+// RUN CODE
+document.getElementById('runBtn').addEventListener('click', () => {
+const code = document.getElementById('codeEditor').value;
+const output = document.getElementById('output');
+const c = challenges[currentChallenge];
+
+output.classList.remove('error');
+document.getElementById('successMessage').classList.remove('show');
+
+if (c.category === 'javascript') {
+    runJavaScript(code, c);
+} else {
+    runSQL(code, c);
+}
+});
+
+// RUN JAVASCRIPT
+function runJavaScript(code, challenge) {
+const output = document.getElementById('output');
+const logs = [];
+const originalLog = console.log;
+
+console.log = (...args) => {
+    logs.push(args.map(a => String(a)).join(' '));
+    originalLog(...args);
+};
+
+try {
+    eval(code);
+    console.log = originalLog;
+    const result = logs.join('\n');
+    output.textContent = result || 'Code dijalankan tanpa output';
+    
+    if (result.trim() === challenge.expectedOutput.trim()) {
+        showSuccess();
+    }
+} catch (error) {
+    console.log = originalLog;
+    output.textContent = `❌ Error: ${error.message}`;
+    output.classList.add('error');
+}
+}
+
+// RUN SQL
+function runSQL(code, challenge) {
+const output = document.getElementById('output');
+
+try {
+    const results = db.exec(code);
+    
+    if (results.length === 0) {
+        output.textContent = '✅ Query berhasil dijalankan (no results)';
+        return;
+    }
+    
+    const result = results[0];
+    const cols = result.columns;
+    const rows = result.values;
+    
+    let html = '<table class="sql-table"><thead><tr>';
+    cols.forEach(col => html += `<th>${col}</th>`);
+    html += '</tr></thead><tbody>';
+    rows.forEach(row => {
+        html += '<tr>';
+        row.forEach(cell => html += `<td>${cell}</td>`);
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    
+    output.innerHTML = html;
+    
+    // Validate
+    let correct = true;
+    if (challenge.expectedColumns && JSON.stringify(cols) !== JSON.stringify(challenge.expectedColumns)) {
+        correct = false;
+    }
+    if (challenge.expectedRowCount && rows.length !== challenge.expectedRowCount) {
+        correct = false;
+    }
+    if (challenge.expectedFirstRow) {
+        const firstRow = {};
+        cols.forEach((col, i) => firstRow[col] = rows[0][i]);
+        if (JSON.stringify(firstRow) !== JSON.stringify(challenge.expectedFirstRow)) {
+            correct = false;
+        }
+    }
+    
+    if (correct) showSuccess();
+    
+} catch (error) {
+    output.textContent = `❌ SQL Error: ${error.message}`;
+    output.classList.add('error');
+}
+}
+
+// SHOW SUCCESS
+function showSuccess() {
+document.getElementById('successMessage').classList.add('show');
+setTimeout(() => document.getElementById('popupOverlay').classList.add('show'), 300);
+}
+
+// POPUP CONTROLS
+document.getElementById('closePopupBtn').addEventListener('click', () => {
+document.getElementById('popupOverlay').classList.remove('show');
+});
+
+document.getElementById('nextChallengeBtn').addEventListener('click', () => {
+document.getElementById('popupOverlay').classList.remove('show');
+const nextIdx = currentChallenge + 1;
+if (nextIdx < challenges.length) {
+    loadChallenge(nextIdx);
+    window.scrollTo({top: 0, behavior: 'smooth'});
+} else {
+    alert('🎊 Semua challenge selesai!');
+    loadChallenge(0);
+}
+});
+
+document.getElementById('popupOverlay').addEventListener('click', (e) => {
+if (e.target === document.getElementById('popupOverlay')) {
+    document.getElementById('popupOverlay').classList.remove('show');
+}
+});
+
+// START
+init();
+    </script>
+</body>
+</html>
