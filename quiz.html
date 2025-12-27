@@ -80,12 +80,8 @@
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .sidebar {
@@ -284,18 +280,6 @@
         .hint-content {
             color: #cbd5e1;
             font-size: 14px;
-        }
-
-        .code-example {
-            background: rgba(15, 23, 42, 0.8);
-            border: 2px solid rgba(59, 130, 246, 0.3);
-            border-radius: 12px;
-            padding: 15px;
-            margin: 15px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            color: #93c5fd;
-            overflow-x: auto;
         }
 
         .db-schema {
@@ -659,6 +643,11 @@
             transform: translateY(-3px);
         }
 
+        /* PENTING: Button "Kembali ke Daftar" tersembunyi di desktop */
+        .back-to-list {
+            display: none;
+        }
+
         @media (max-width: 1024px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -671,12 +660,39 @@
 
             .workspace {
                 order: 2;
+                display: none;
+            }
+
+            .workspace.mobile-show {
+                display: flex;
             }
 
             .challenge-list {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
                 gap: 10px;
+            }
+
+            /* Button muncul di mobile */
+            .back-to-list {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 20px;
+                background: rgba(59, 130, 246, 0.2);
+                border: 2px solid #3b82f6;
+                color: #3b82f6;
+                text-decoration: none;
+                border-radius: 10px;
+                margin-bottom: 15px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-weight: 600;
+            }
+
+            .back-to-list:hover {
+                background: rgba(59, 130, 246, 0.4);
+                transform: translateX(-5px);
             }
         }
 
@@ -716,6 +732,11 @@
             .popup-btn {
                 width: 100%;
             }
+
+            .back-to-list {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -749,6 +770,8 @@
             </div>
 
             <div class="workspace">
+                <button class="back-to-list" id="backToList">← Kembali ke Daftar Challenge</button>
+                
                 <div class="instruction-panel" id="instructionPanel"></div>
 
                 <div class="editor-panel">
@@ -790,7 +813,7 @@
     </div>
 
     <script>
-        // CHALLENGE DATA
+        // CHALLENGE DATA - JAVASCRIPT
 const jsChalls = [
 {
     id: 1, category: 'javascript', icon: "🔁", title: "For Loop Dasar", desc: "Belajar looping dengan for",
@@ -850,6 +873,7 @@ const jsChalls = [
 }
 ];
 
+// CHALLENGE DATA - SQL (FIXED!)
 const sqlChalls = [
 {
     id: 9, category: 'sql', icon: "📋", title: "SELECT Dasar", desc: "Query data sederhana",
@@ -913,7 +937,8 @@ const sqlChalls = [
 4 | Doni | doni@mail.com | 28
 5 | Eka | eka@mail.com | 27</div></div>`,
     expectedColumns: ['id', 'name', 'email', 'age'],
-    expectedFirstRow: {name: 'Budi'}
+    expectedRowCount: 5,
+    expectedFirstRow: {id: 2, name: 'Budi', email: 'budi@mail.com', age: 30}
 },
 {
     id: 13, category: 'sql', icon: "🔢", title: "COUNT Function", desc: "Hitung jumlah data",
@@ -945,6 +970,7 @@ const sqlChalls = [
 3 | Keyboard | 300000 | 30
 4 | Monitor | 2000000 | 15</div></div>`,
     expectedColumns: ['total_price'],
+    expectedRowCount: 1,
     expectedFirstRow: {total_price: 7450000}
 },
 {
@@ -961,6 +987,7 @@ const sqlChalls = [
 4 | Doni | doni@mail.com | 28
 5 | Eka | eka@mail.com | 27</div></div>`,
     expectedColumns: ['avg_age'],
+    expectedRowCount: 1,
     expectedFirstRow: {avg_age: 26.4}
 },
 {
@@ -1002,7 +1029,6 @@ try {
     
     db = new SQL.Database();
     
-    // Create users table
     db.run(`CREATE TABLE users (
         id INTEGER PRIMARY KEY,
         name TEXT,
@@ -1018,7 +1044,6 @@ try {
         (5, 'Eka', 'eka@mail.com', 27)
     `);
     
-    // Create products table
     db.run(`CREATE TABLE products (
         id INTEGER PRIMARY KEY,
         name TEXT,
@@ -1083,13 +1108,24 @@ document.getElementById('editorLabel').textContent = c.category === 'sql' ? 'SQL
 document.getElementById('output').textContent = 'Klik "Run" untuk melihat hasil...';
 document.getElementById('output').classList.remove('error');
 document.getElementById('successMessage').classList.remove('show');
+
+// Show workspace on mobile
+if (window.innerWidth <= 1024) {
+    document.querySelector('.workspace').classList.add('mobile-show');
+    document.querySelector('.sidebar').style.display = 'none';
 }
+}
+
+// BACK TO LIST (MOBILE)
+document.getElementById('backToList').addEventListener('click', () => {
+document.querySelector('.workspace').classList.remove('mobile-show');
+document.querySelector('.sidebar').style.display = 'block';
+});
 
 // CATEGORY CHANGE
 document.getElementById('categorySelect').addEventListener('change', (e) => {
 currentCategory = e.target.value;
 
-// Update icon
 const iconDisplay = document.getElementById('categoryIcon');
 if (currentCategory === 'javascript') {
     iconDisplay.innerHTML = '<div class="category-icon js-logo">JS</div>';
@@ -1163,7 +1199,7 @@ try {
 }
 }
 
-// RUN SQL
+// RUN SQL - FIXED VALIDATION!
 function runSQL(code, challenge) {
 const output = document.getElementById('output');
 
@@ -1191,19 +1227,41 @@ try {
     
     output.innerHTML = html;
     
-    // Validate
+    // VALIDASI YANG DIPERBAIKI
     let correct = true;
-    if (challenge.expectedColumns && JSON.stringify(cols) !== JSON.stringify(challenge.expectedColumns)) {
-        correct = false;
+    
+    // Check columns
+    if (challenge.expectedColumns) {
+        const colsLower = cols.map(c => c.toLowerCase());
+        const expectedLower = challenge.expectedColumns.map(c => c.toLowerCase());
+        const colsMatch = colsLower.length === expectedLower.length && 
+                         colsLower.every((col, i) => col === expectedLower[i]);
+        if (!colsMatch) correct = false;
     }
-    if (challenge.expectedRowCount && rows.length !== challenge.expectedRowCount) {
-        correct = false;
+    
+    // Check row count
+    if (challenge.expectedRowCount !== undefined) {
+        if (rows.length !== challenge.expectedRowCount) correct = false;
     }
-    if (challenge.expectedFirstRow) {
+    
+    // Check first row values
+    if (challenge.expectedFirstRow && rows.length > 0) {
         const firstRow = {};
-        cols.forEach((col, i) => firstRow[col] = rows[0][i]);
-        if (JSON.stringify(firstRow) !== JSON.stringify(challenge.expectedFirstRow)) {
-            correct = false;
+        cols.forEach((col, i) => firstRow[col.toLowerCase()] = rows[0][i]);
+        
+        for (let key in challenge.expectedFirstRow) {
+            const expectedVal = challenge.expectedFirstRow[key];
+            const actualVal = firstRow[key.toLowerCase()];
+            
+            if (typeof expectedVal === 'number' && typeof actualVal === 'number') {
+                if (Math.abs(actualVal - expectedVal) > 0.01) {
+                    correct = false;
+                    break;
+                }
+            } else if (actualVal !== expectedVal) {
+                correct = false;
+                break;
+            }
         }
     }
     
