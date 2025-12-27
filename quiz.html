@@ -389,11 +389,127 @@
             background: rgba(251, 191, 36, 0.2);
             border: 2px solid #fbbf24;
             color: #fbbf24;
+            position: relative;
         }
 
-        .btn-hint:hover {
+        .btn-hint:hover:not(:disabled) {
             background: rgba(251, 191, 36, 0.3);
             transform: translateY(-2px);
+        }
+
+        .btn-hint:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .hint-counter {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            border: 2px solid #0f172a;
+        }
+
+        .cooldown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .cooldown-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .cooldown-modal {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 3px solid #fbbf24;
+            border-radius: 30px;
+            padding: 50px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            animation: popupBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 20px 60px rgba(251, 191, 36, 0.4);
+        }
+
+        .cooldown-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .cooldown-title {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .cooldown-message {
+            font-size: 18px;
+            color: #cbd5e1;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .cooldown-timer {
+            font-size: 72px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ef4444, #f87171, #fca5a5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .cooldown-btn {
+            padding: 15px 35px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            background: rgba(59, 130, 246, 0.2);
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .cooldown-btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+            transform: translateY(-3px);
         }
 
         .code-editor {
@@ -770,7 +886,7 @@
             </div>
 
             <div class="workspace">
-                <button class="back-to-list" id="backToList">← Kembali ke Daftar Challenge</button>
+                <button class="back-to-list" id="backToList">← Kembali ke Daftar</button>
                 
                 <div class="instruction-panel" id="instructionPanel"></div>
 
@@ -809,6 +925,16 @@
                 <button class="popup-btn popup-btn-primary" id="nextChallengeBtn">Challenge Berikutnya →</button>
                 <button class="popup-btn popup-btn-secondary" id="closePopupBtn">Tetap di Sini</button>
             </div>
+        </div>
+    </div>
+
+    <div class="cooldown-overlay" id="cooldownOverlay">
+        <div class="cooldown-modal">
+            <div class="cooldown-icon">⏱️</div>
+            <div class="cooldown-title">Hint Habis!</div>
+            <div class="cooldown-message">Kamu sudah menggunakan 3 hint. Tunggu sebentar untuk reload hint.</div>
+            <div class="cooldown-timer" id="cooldownTimer">30</div>
+            <button class="cooldown-btn" id="closeCooldownBtn">Tutup</button>
         </div>
     </div>
 
@@ -873,7 +999,7 @@ const jsChalls = [
 }
 ];
 
-// CHALLENGE DATA - SQL (FIXED!)
+// CHALLENGE DATA - SQL
 const sqlChalls = [
 {
     id: 9, category: 'sql', icon: "📋", title: "SELECT Dasar", desc: "Query data sederhana",
@@ -1013,293 +1139,462 @@ let currentChallenge = 0;
 let currentCategory = 'javascript';
 let db = null;
 
+// HINT SYSTEM
+let hintCount = 3;
+let hintCooldown = false;
+let cooldownInterval = null;
+let cooldownEndTime = null;
+const COOLDOWN_DURATION = 90; // Durasi cooldown dalam detik (ubah sesuai kebutuhan)
+
+// FORMAT WAKTU KE MENIT DAN DETIK
+function formatTime(seconds) {
+    if (seconds < 60) {
+        return `${seconds} detik`;
+    }
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (remainingSeconds === 0) {
+        return `${minutes} menit`;
+    }
+    
+    return `${minutes} menit ${remainingSeconds} detik`;
+}
+
 // INITIALIZE
 async function init() {
-await initSQL();
-renderChallengeList();
-loadChallenge(0);
+    await initSQL();
+    loadHintState(); // Load hint state dari localStorage
+    renderChallengeList();
+    loadChallenge(0);
+    updateHintButton();
+}
+
+// SAVE HINT STATE
+function saveHintState() {
+    localStorage.setItem('hintCount', hintCount);
+    localStorage.setItem('hintCooldown', hintCooldown);
+    if (cooldownEndTime) {
+        localStorage.setItem('cooldownEndTime', cooldownEndTime);
+    } else {
+        localStorage.removeItem('cooldownEndTime');
+    }
+}
+
+// LOAD HINT STATE
+function loadHintState() {
+    const savedCount = localStorage.getItem('hintCount');
+    const savedCooldown = localStorage.getItem('hintCooldown');
+    const savedEndTime = localStorage.getItem('cooldownEndTime');
+    
+    if (savedCount !== null) {
+        hintCount = parseInt(savedCount);
+    }
+    
+    if (savedCooldown === 'true' && savedEndTime) {
+        const endTime = parseInt(savedEndTime);
+        const now = Date.now();
+        
+        if (now < endTime) {
+            // Masih dalam cooldown
+            cooldownEndTime = endTime;
+            hintCooldown = true;
+            startCooldownFromSaved();
+        } else {
+            // Cooldown sudah selesai
+            hintCount = 3;
+            hintCooldown = false;
+            cooldownEndTime = null;
+            saveHintState();
+        }
+    }
+}
+
+// START COOLDOWN FROM SAVED STATE
+function startCooldownFromSaved() {
+    hintCooldown = true;
+    
+    const updateTimer = () => {
+        const now = Date.now();
+        const timeLeft = Math.ceil((cooldownEndTime - now) / 1000);
+        
+        if (timeLeft <= 0) {
+            clearInterval(cooldownInterval);
+            hintCount = 3;
+            hintCooldown = false;
+            cooldownEndTime = null;
+            saveHintState();
+            updateHintButton();
+        } else {
+            updateHintButton(timeLeft);
+        }
+    };
+    
+    updateTimer();
+    cooldownInterval = setInterval(updateTimer, 1000);
+}
+
+// UPDATE HINT BUTTON
+function updateHintButton(countdown = null) {
+    const btn = document.getElementById('showHintBtn');
+    const existingCounter = btn.querySelector('.hint-counter');
+    
+    if (existingCounter) {
+        existingCounter.remove();
+    }
+    
+    if (hintCooldown && countdown !== null) {
+        btn.disabled = true;
+        const formattedTime = formatTime(countdown);
+        btn.innerHTML = `⏱️ ${formattedTime} <span class="hint-counter">0</span>`;
+    } else if (hintCount > 0 && !hintCooldown) {
+        btn.disabled = false;
+        btn.innerHTML = `💡 Hint <span class="hint-counter">${hintCount}</span>`;
+    } else if (hintCooldown) {
+        btn.disabled = true;
+        btn.innerHTML = `⏱️ Cooldown`;
+    } else {
+        btn.disabled = true;
+        btn.innerHTML = `🔒 Hint Habis`;
+    }
+}
+
+// START COOLDOWN
+function startCooldown() {
+    hintCooldown = true;
+    cooldownEndTime = Date.now() + (180 * 1000);
+    saveHintState();
+    
+    let timeLeft = 180;
+    
+    const overlay = document.getElementById('cooldownOverlay');
+    const timerDisplay = document.getElementById('cooldownTimer');
+    
+    overlay.classList.add('show');
+    timerDisplay.textContent = formatTime(timeLeft);
+    
+    updateHintButton(timeLeft);
+    
+    cooldownInterval = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = formatTime(timeLeft);
+        updateHintButton(timeLeft);
+        
+        if (timeLeft <= 0) {
+            clearInterval(cooldownInterval);
+            hintCount = 3;
+            hintCooldown = false;
+            cooldownEndTime = null;
+            saveHintState();
+            overlay.classList.remove('show');
+            updateHintButton();
+        }
+    }, 1000);
 }
 
 // INIT SQL DATABASE
 async function initSQL() {
-try {
-    const SQL = await initSqlJs({
-        locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
-    });
-    
-    db = new SQL.Database();
-    
-    db.run(`CREATE TABLE users (
-        id INTEGER PRIMARY KEY,
-        name TEXT,
-        email TEXT,
-        age INTEGER
-    )`);
-    
-    db.run(`INSERT INTO users VALUES 
-        (1, 'Andi', 'andi@mail.com', 25),
-        (2, 'Budi', 'budi@mail.com', 30),
-        (3, 'Citra', 'citra@mail.com', 22),
-        (4, 'Doni', 'doni@mail.com', 28),
-        (5, 'Eka', 'eka@mail.com', 27)
-    `);
-    
-    db.run(`CREATE TABLE products (
-        id INTEGER PRIMARY KEY,
-        name TEXT,
-        price INTEGER,
-        stock INTEGER
-    )`);
-    
-    db.run(`INSERT INTO products VALUES 
-        (1, 'Laptop', 5000000, 10),
-        (2, 'Mouse', 150000, 50),
-        (3, 'Keyboard', 300000, 30),
-        (4, 'Monitor', 2000000, 15)
-    `);
-    
-    console.log('✅ Database initialized');
-} catch (error) {
-    console.error('❌ Database init error:', error);
-}
+    try {
+        const SQL = await initSqlJs({
+            locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+        });
+        
+        db = new SQL.Database();
+        
+        db.run(`CREATE TABLE users (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            email TEXT,
+            age INTEGER
+        )`);
+        
+        db.run(`INSERT INTO users VALUES 
+            (1, 'Andi', 'andi@mail.com', 25),
+            (2, 'Budi', 'budi@mail.com', 30),
+            (3, 'Citra', 'citra@mail.com', 22),
+            (4, 'Doni', 'doni@mail.com', 28),
+            (5, 'Eka', 'eka@mail.com', 27)
+        `);
+        
+        db.run(`CREATE TABLE products (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            price INTEGER,
+            stock INTEGER
+        )`);
+        
+        db.run(`INSERT INTO products VALUES 
+            (1, 'Laptop', 5000000, 10),
+            (2, 'Mouse', 150000, 50),
+            (3, 'Keyboard', 300000, 30),
+            (4, 'Monitor', 2000000, 15)
+        `);
+        
+        console.log('✅ Database initialized');
+    } catch (error) {
+        console.error('❌ Database init error:', error);
+    }
 }
 
 // RENDER CHALLENGE LIST
 function renderChallengeList() {
-const filtered = challenges.filter(c => c.category === currentCategory);
-const list = document.getElementById('challengeList');
-list.innerHTML = filtered.map((c, idx) => `
-    <div class="challenge-item ${idx === 0 ? 'active' : ''}" data-index="${challenges.indexOf(c)}">
-        <div class="challenge-icon">${c.icon}</div>
-        <div class="challenge-text">
-            <div class="challenge-title">${c.title}</div>
-            <div class="challenge-desc">${c.desc}</div>
+    const filtered = challenges.filter(c => c.category === currentCategory);
+    const list = document.getElementById('challengeList');
+    list.innerHTML = filtered.map((c, idx) => `
+        <div class="challenge-item ${idx === 0 ? 'active' : ''}" data-index="${challenges.indexOf(c)}">
+            <div class="challenge-icon">${c.icon}</div>
+            <div class="challenge-text">
+                <div class="challenge-title">${c.title}</div>
+                <div class="challenge-desc">${c.desc}</div>
+            </div>
         </div>
-    </div>
-`).join('');
+    `).join('');
 
-document.querySelectorAll('.challenge-item').forEach(item => {
-    item.addEventListener('click', () => loadChallenge(parseInt(item.dataset.index)));
-});
+    document.querySelectorAll('.challenge-item').forEach(item => {
+        item.addEventListener('click', () => loadChallenge(parseInt(item.dataset.index)));
+    });
 }
 
 // LOAD CHALLENGE
 function loadChallenge(index) {
-currentChallenge = index;
-const c = challenges[index];
+    currentChallenge = index;
+    const c = challenges[index];
 
-document.querySelectorAll('.challenge-item').forEach((item, i) => {
-    item.classList.toggle('active', parseInt(item.dataset.index) === index);
-});
+    document.querySelectorAll('.challenge-item').forEach((item, i) => {
+        item.classList.toggle('active', parseInt(item.dataset.index) === index);
+    });
 
-const panel = document.getElementById('instructionPanel');
-panel.innerHTML = `
-    <div class="instruction-title">${c.icon} ${c.title}</div>
-    <div class="instruction-content">${c.instruction}</div>
-    ${c.dbSchema ? `<div class="db-schema">${c.dbSchema}</div>` : ''}
-    <div class="hint-box" id="hintBox" style="display: none;">
-        <div class="hint-title">💡 Hint</div>
-        <div class="hint-content">${c.hint}</div>
-    </div>
-`;
+    const panel = document.getElementById('instructionPanel');
+    panel.innerHTML = `
+        <div class="instruction-title">${c.icon} ${c.title}</div>
+        <div class="instruction-content">${c.instruction}</div>
+        ${c.dbSchema ? `<div class="db-schema">${c.dbSchema}</div>` : ''}
+        <div class="hint-box" id="hintBox" style="display: none;">
+            <div class="hint-title">💡 Hint</div>
+            <div class="hint-content">${c.hint}</div>
+        </div>
+    `;
 
-document.getElementById('codeEditor').value = c.starterCode || '';
-document.getElementById('editorLabel').textContent = c.category === 'sql' ? 'SQL Editor' : 'Code Editor';
-document.getElementById('output').textContent = 'Klik "Run" untuk melihat hasil...';
-document.getElementById('output').classList.remove('error');
-document.getElementById('successMessage').classList.remove('show');
+    document.getElementById('codeEditor').value = c.starterCode || '';
+    document.getElementById('editorLabel').textContent = c.category === 'sql' ? 'SQL Editor' : 'Code Editor';
+    document.getElementById('output').textContent = 'Klik "Run" untuk melihat hasil...';
+    document.getElementById('output').classList.remove('error');
+    document.getElementById('successMessage').classList.remove('show');
+    document.getElementById('hintBox').style.display = 'none';
 
-// Show workspace on mobile
-if (window.innerWidth <= 1024) {
-    document.querySelector('.workspace').classList.add('mobile-show');
-    document.querySelector('.sidebar').style.display = 'none';
-}
+    // Show workspace on mobile
+    if (window.innerWidth <= 1024) {
+        document.querySelector('.workspace').classList.add('mobile-show');
+        document.querySelector('.sidebar').style.display = 'none';
+    }
 }
 
 // BACK TO LIST (MOBILE)
 document.getElementById('backToList').addEventListener('click', () => {
-document.querySelector('.workspace').classList.remove('mobile-show');
-document.querySelector('.sidebar').style.display = 'block';
+    document.querySelector('.workspace').classList.remove('mobile-show');
+    document.querySelector('.sidebar').style.display = 'block';
 });
 
 // CATEGORY CHANGE
 document.getElementById('categorySelect').addEventListener('change', (e) => {
-currentCategory = e.target.value;
+    currentCategory = e.target.value;
 
-const iconDisplay = document.getElementById('categoryIcon');
-if (currentCategory === 'javascript') {
-    iconDisplay.innerHTML = '<div class="category-icon js-logo">JS</div>';
-} else {
-    iconDisplay.innerHTML = '<div class="category-icon sql-logo">SQL</div>';
-}
+    const iconDisplay = document.getElementById('categoryIcon');
+    if (currentCategory === 'javascript') {
+        iconDisplay.innerHTML = '<div class="category-icon js-logo">JS</div>';
+    } else {
+        iconDisplay.innerHTML = '<div class="category-icon sql-logo">SQL</div>';
+    }
 
-renderChallengeList();
-const firstOfCategory = challenges.findIndex(c => c.category === currentCategory);
-loadChallenge(firstOfCategory);
+    renderChallengeList();
+    const firstOfCategory = challenges.findIndex(c => c.category === currentCategory);
+    loadChallenge(firstOfCategory);
 });
 
 // SHOW HINT
 document.getElementById('showHintBtn').addEventListener('click', () => {
-const box = document.getElementById('hintBox');
-const btn = document.getElementById('showHintBtn');
-if (box.style.display === 'none') {
-    box.style.display = 'block';
-    btn.textContent = '🔒 Sembunyikan';
-} else {
-    box.style.display = 'none';
-    btn.textContent = '💡 Hint';
-}
+    if (hintCooldown || hintCount <= 0) return;
+    
+    const box = document.getElementById('hintBox');
+    const isVisible = box.style.display !== 'none';
+    
+    if (!isVisible) {
+        // Menggunakan hint
+        hintCount--;
+        saveHintState();
+        box.style.display = 'block';
+        updateHintButton();
+        
+        // Jika hint habis, mulai cooldown
+        if (hintCount === 0) {
+            startCooldown();
+        }
+    } else {
+        // Menyembunyikan hint (tidak mengurangi count)
+        box.style.display = 'none';
+    }
+});
+
+// CLOSE COOLDOWN OVERLAY
+document.getElementById('closeCooldownBtn').addEventListener('click', () => {
+    document.getElementById('cooldownOverlay').classList.remove('show');
+    // Cooldown tetap berjalan di background
+});
+
+document.getElementById('cooldownOverlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('cooldownOverlay')) {
+        document.getElementById('cooldownOverlay').classList.remove('show');
+        // Cooldown tetap berjalan di background
+    }
 });
 
 // RESET
 document.getElementById('resetBtn').addEventListener('click', () => {
-if (confirm('Reset kode?')) loadChallenge(currentChallenge);
+    if (confirm('Reset kode?')) loadChallenge(currentChallenge);
 });
 
 // RUN CODE
 document.getElementById('runBtn').addEventListener('click', () => {
-const code = document.getElementById('codeEditor').value;
-const output = document.getElementById('output');
-const c = challenges[currentChallenge];
+    const code = document.getElementById('codeEditor').value;
+    const output = document.getElementById('output');
+    const c = challenges[currentChallenge];
 
-output.classList.remove('error');
-document.getElementById('successMessage').classList.remove('show');
+    output.classList.remove('error');
+    document.getElementById('successMessage').classList.remove('show');
 
-if (c.category === 'javascript') {
-    runJavaScript(code, c);
-} else {
-    runSQL(code, c);
-}
+    if (c.category === 'javascript') {
+        runJavaScript(code, c);
+    } else {
+        runSQL(code, c);
+    }
 });
 
 // RUN JAVASCRIPT
 function runJavaScript(code, challenge) {
-const output = document.getElementById('output');
-const logs = [];
-const originalLog = console.log;
+    const output = document.getElementById('output');
+    const logs = [];
+    const originalLog = console.log;
 
-console.log = (...args) => {
-    logs.push(args.map(a => String(a)).join(' '));
-    originalLog(...args);
-};
+    console.log = (...args) => {
+        logs.push(args.map(a => String(a)).join(' '));
+        originalLog(...args);
+    };
 
-try {
-    eval(code);
-    console.log = originalLog;
-    const result = logs.join('\n');
-    output.textContent = result || 'Code dijalankan tanpa output';
-    
-    if (result.trim() === challenge.expectedOutput.trim()) {
-        showSuccess();
-    }
-} catch (error) {
-    console.log = originalLog;
-    output.textContent = `❌ Error: ${error.message}`;
-    output.classList.add('error');
-}
-}
-
-// RUN SQL - FIXED VALIDATION!
-function runSQL(code, challenge) {
-const output = document.getElementById('output');
-
-try {
-    const results = db.exec(code);
-    
-    if (results.length === 0) {
-        output.textContent = '✅ Query berhasil dijalankan (no results)';
-        return;
-    }
-    
-    const result = results[0];
-    const cols = result.columns;
-    const rows = result.values;
-    
-    let html = '<table class="sql-table"><thead><tr>';
-    cols.forEach(col => html += `<th>${col}</th>`);
-    html += '</tr></thead><tbody>';
-    rows.forEach(row => {
-        html += '<tr>';
-        row.forEach(cell => html += `<td>${cell}</td>`);
-        html += '</tr>';
-    });
-    html += '</tbody></table>';
-    
-    output.innerHTML = html;
-    
-    // VALIDASI YANG DIPERBAIKI
-    let correct = true;
-    
-    // Check columns
-    if (challenge.expectedColumns) {
-        const colsLower = cols.map(c => c.toLowerCase());
-        const expectedLower = challenge.expectedColumns.map(c => c.toLowerCase());
-        const colsMatch = colsLower.length === expectedLower.length && 
-                         colsLower.every((col, i) => col === expectedLower[i]);
-        if (!colsMatch) correct = false;
-    }
-    
-    // Check row count
-    if (challenge.expectedRowCount !== undefined) {
-        if (rows.length !== challenge.expectedRowCount) correct = false;
-    }
-    
-    // Check first row values
-    if (challenge.expectedFirstRow && rows.length > 0) {
-        const firstRow = {};
-        cols.forEach((col, i) => firstRow[col.toLowerCase()] = rows[0][i]);
+    try {
+        eval(code);
+        console.log = originalLog;
+        const result = logs.join('\n');
+        output.textContent = result || 'Code dijalankan tanpa output';
         
-        for (let key in challenge.expectedFirstRow) {
-            const expectedVal = challenge.expectedFirstRow[key];
-            const actualVal = firstRow[key.toLowerCase()];
+        if (result.trim() === challenge.expectedOutput.trim()) {
+            showSuccess();
+        }
+    } catch (error) {
+        console.log = originalLog;
+        output.textContent = `❌ Error: ${error.message}`;
+        output.classList.add('error');
+    }
+}
+
+// RUN SQL
+function runSQL(code, challenge) {
+    const output = document.getElementById('output');
+
+    try {
+        const results = db.exec(code);
+        
+        if (results.length === 0) {
+            output.textContent = '✅ Query berhasil dijalankan (no results)';
+            return;
+        }
+        
+        const result = results[0];
+        const cols = result.columns;
+        const rows = result.values;
+        
+        let html = '<table class="sql-table"><thead><tr>';
+        cols.forEach(col => html += `<th>${col}</th>`);
+        html += '</tr></thead><tbody>';
+        rows.forEach(row => {
+            html += '<tr>';
+            row.forEach(cell => html += `<td>${cell}</td>`);
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        
+        output.innerHTML = html;
+        
+        // VALIDASI
+        let correct = true;
+        
+        if (challenge.expectedColumns) {
+            const colsLower = cols.map(c => c.toLowerCase());
+            const expectedLower = challenge.expectedColumns.map(c => c.toLowerCase());
+            const colsMatch = colsLower.length === expectedLower.length && 
+                             colsLower.every((col, i) => col === expectedLower[i]);
+            if (!colsMatch) correct = false;
+        }
+        
+        if (challenge.expectedRowCount !== undefined) {
+            if (rows.length !== challenge.expectedRowCount) correct = false;
+        }
+        
+        if (challenge.expectedFirstRow && rows.length > 0) {
+            const firstRow = {};
+            cols.forEach((col, i) => firstRow[col.toLowerCase()] = rows[0][i]);
             
-            if (typeof expectedVal === 'number' && typeof actualVal === 'number') {
-                if (Math.abs(actualVal - expectedVal) > 0.01) {
+            for (let key in challenge.expectedFirstRow) {
+                const expectedVal = challenge.expectedFirstRow[key];
+                const actualVal = firstRow[key.toLowerCase()];
+                
+                if (typeof expectedVal === 'number' && typeof actualVal === 'number') {
+                    if (Math.abs(actualVal - expectedVal) > 0.01) {
+                        correct = false;
+                        break;
+                    }
+                } else if (actualVal !== expectedVal) {
                     correct = false;
                     break;
                 }
-            } else if (actualVal !== expectedVal) {
-                correct = false;
-                break;
             }
         }
+        
+        if (correct) showSuccess();
+        
+    } catch (error) {
+        output.textContent = `❌ SQL Error: ${error.message}`;
+        output.classList.add('error');
     }
-    
-    if (correct) showSuccess();
-    
-} catch (error) {
-    output.textContent = `❌ SQL Error: ${error.message}`;
-    output.classList.add('error');
-}
 }
 
 // SHOW SUCCESS
 function showSuccess() {
-document.getElementById('successMessage').classList.add('show');
-setTimeout(() => document.getElementById('popupOverlay').classList.add('show'), 300);
+    document.getElementById('successMessage').classList.add('show');
+    setTimeout(() => document.getElementById('popupOverlay').classList.add('show'), 300);
 }
 
 // POPUP CONTROLS
 document.getElementById('closePopupBtn').addEventListener('click', () => {
-document.getElementById('popupOverlay').classList.remove('show');
+    document.getElementById('popupOverlay').classList.remove('show');
 });
 
 document.getElementById('nextChallengeBtn').addEventListener('click', () => {
-document.getElementById('popupOverlay').classList.remove('show');
-const nextIdx = currentChallenge + 1;
-if (nextIdx < challenges.length) {
-    loadChallenge(nextIdx);
-    window.scrollTo({top: 0, behavior: 'smooth'});
-} else {
-    alert('🎊 Semua challenge selesai!');
-    loadChallenge(0);
-}
+    document.getElementById('popupOverlay').classList.remove('show');
+    const nextIdx = currentChallenge + 1;
+    if (nextIdx < challenges.length) {
+        loadChallenge(nextIdx);
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    } else {
+        alert('🎊 Semua challenge selesai!');
+        loadChallenge(0);
+    }
 });
 
 document.getElementById('popupOverlay').addEventListener('click', (e) => {
-if (e.target === document.getElementById('popupOverlay')) {
-    document.getElementById('popupOverlay').classList.remove('show');
-}
+    if (e.target === document.getElementById('popupOverlay')) {
+        document.getElementById('popupOverlay').classList.remove('show');
+    }
 });
 
 // START
